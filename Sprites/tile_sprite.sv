@@ -1,4 +1,4 @@
-module tile_sprite #() (
+module tile_sprite (
     input logic [9:0] pos_x,
     input logic [9:0] pos_y,
     input logic tile_type,

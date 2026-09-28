@@ -1,4 +1,4 @@
-module mario_sprite #() (
+module mario_sprite (
     input logic [9:0] pos_x,
     input logic [9:0] pos_y,
     input logic [9:0] mario_x,
