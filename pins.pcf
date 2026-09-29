@@ -1,0 +1,32 @@
+# Pin constraints for Mario_Top
+# Board: ECE270 breakout (rev 2), iCE40HX8K CT256 -> nextpnr --hx8k --package ct256
+# Buttons use the old pin pad pins (pb[0..3]); VGA uses the Pmod cut-out on the board.
+# color_out = {R[3:0], G[3:0], B[3:0]}: [11:8] red, [7:4] green, [3:0] blue.
+
+# ---------------- Clock ----------------
+set_io clock_12m     J3        # 12 MHz oscillator (hwclk)
+
+# ---------------- Buttons (active high, breadboard) ----------------
+set_io btn_left      C3        
+set_io btn_right     B3       
+set_io btn_up        C4     
+set_io btn_rst       C5        
+
+# ---------------- Pmod VGA, connector J1: red + blue ----------------
+set_io color_out[0]  J4         #blue0 (LSB)
+set_io color_out[1]  H5         #blue1
+set_io color_out[2]  G5         #blue2
+set_io color_out[3]  F5         #blue3 (MSB)
+set_io color_out[8]  K4         #red0 (LSB)
+set_io color_out[9]  H3         #red1
+set_io color_out[10] G3         #red2
+set_io color_out[11] F3         #red3 (MSB)
+
+# ---------------- Pmod VGA, connector J2: green + sync ----------------
+set_io color_out[4]  E3         #green0
+set_io color_out[5]  E5         #green1
+set_io color_out[6]  D6         #green2
+set_io color_out[7]  D7         #green3
+set_io X_SYNC_OUT    E6         #X_SYNC
+set_io Y_SYNC_OUT    D5         #Y_SYNC
+
