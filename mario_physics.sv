@@ -15,6 +15,7 @@ module mario_physics #(
     input logic btn_left, //active high, sync
     input logic btn_right,
     input logic btn_up,
+    input logic [299:0] map_array, 
     output logic [9:0] mario_x,
     output logic [9:0] mario_y
 );
@@ -76,6 +77,77 @@ always_comb begin
     end
 end
 
+//collision logic
+
+//collision walls 
+logic [9:0] x_edge; //pixel column on the side mario moving towards
+logic [9:0] x_col; //final x after collision, stored
+
+//xt = is there a solid tile at marios top corner
+//xb = is there solid tile at mario bottom corner
+//hitx = mario would move into a wall this frame
+logic solid_xt, solid_xb, hit_x;
+
+//tile map logic 
+tilemap probe_xt (.pos_x(x_edge), .pos_y(mario_y), .map_array(map_array), .tile_type(solid_xt)); //top corner
+tilemap probe_xb (.pos_x(x_edge), .pos_y(mario_y + 10'd31), .map_array(map_array), .tile_type(solid_xb)); //bottom corner
+
+//only count it as a hit if mario is actually moving sideways
+assign hit_x = (dx != 0) && (solid_xt || solid_xb);
+
+//pick the final x 
+always_comb begin
+    if (!hit_x) begin
+        //no wall, keep position from clamp
+        x_col = x_next;
+    end
+    else if (dx > 0) begin
+        //wall on the right, clears the low 5 bits = left ege of the tile he hit
+        x_col = {x_edge[9:5], 5'd0} - 10'd32;
+    end
+    else begin
+        //wall on the left, + 32 instead
+        x_col = {x_edge[9:5], 5'd0} + 10'd32;
+    end
+end
+
+//Y collision logic 
+logic [9:0] y_edge; //pixel row on the side mario's moving towards
+logic [9:0] y_col; //final y after the collision, get stored
+
+//yl = is there a solid tile at marios left corner
+//yr = is there a solid tile at marios right corner
+//hit_y = mario would move into a floor or ceiling this frame
+logic solid_yl, solid_yr, hit_y;
+
+//falling, the leading side is marios bottom edge (y + 31)
+assign y_edge = (dy > 0) ? y_next + 10'd31 : y_next;
+
+//uses x_col so a wall hit is resolved before checking y
+tilemap probe_yl (.pos_x(x_col), .pos_y(y_edge), .map_array(map_array), .tile_type(solid_yl)); //left corner
+tilemap probe_yr (.pos_x(x_col + 10'd31), .pos_y(y_edge), .map_array(map_array), .tile_type(solid_yr)); //right corner
+
+//mario rising or falling
+assign hit_y = solid_yl || solid_yr;
+
+//pick the final Y
+always_comb begin
+    if (!hit_y) begin
+        //nothing then y_next
+        y_col = y_next;
+    end
+    else if (dy > 0) begin
+        //if top edge hit - mario height
+        y_col = {y_edge[9:5], 5'd0} - 10'd32;
+    end
+    else begin
+        y_col = {y_edge[9:5], 5'd0} + 10'd32;
+    end
+end
+
+//move right (x + 31) or x = left
+assign x_edge = (dx > 0) ? x_next + 10'd31 : x_next;
+
 //register, the only state, updated once per frame
 always_ff @(posedge clk) begin
     if (rst) begin
@@ -83,8 +155,8 @@ always_ff @(posedge clk) begin
         mario_y <= Y_RST;
     end
     else if (frame_tick) begin
-        mario_x <= x_next;
-        mario_y <= y_next;
+        mario_x <= x_col;
+        mario_y <= y_col;
     end
 end
 
