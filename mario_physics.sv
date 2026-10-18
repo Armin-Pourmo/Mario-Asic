@@ -9,8 +9,8 @@ module mario_physics #(
     parameter X_RST = 10'd32, //spawn x
     parameter Y_RST = 10'd416 //spawn y (standing on the bottom tile row)
 ) (
-    input logic clk,
-    input logic rst, //sync, active high
+    input logic clk, en,
+    input logic n_rst, //async, active low
     input logic frame_tick, //one clock pulse per frame, clk en
     input logic btn_left, //active high, sync
     input logic btn_right,
@@ -149,12 +149,12 @@ end
 assign x_edge = (dx > 0) ? x_next + 10'd31 : x_next;
 
 //register, the only state, updated once per frame
-always_ff @(posedge clk) begin
-    if (rst) begin
+always_ff @(posedge clk, negedge n_rst) begin
+    if (!n_rst) begin
         mario_x <= X_RST;
         mario_y <= Y_RST;
     end
-    else if (frame_tick) begin
+    else if (frame_tick & en) begin
         mario_x <= x_col;
         mario_y <= y_col;
     end
